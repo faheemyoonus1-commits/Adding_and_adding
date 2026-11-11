@@ -9,6 +9,7 @@
   <title>Chapter 6: Adding... And Adding Again — Mobile, Tablet & Laptop Interactive 3D Math World</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <style>
     * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
@@ -68,7 +69,7 @@
       position: fixed;
       inset: 0;
       pointer-events: none;
-      z-index: 9999;
+      z-index: 10002;
     }
     .custom-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
     .custom-scroll::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); }
@@ -134,6 +135,19 @@
       background: rgba(245, 158, 11, 0.16);
       border-color: rgba(245, 158, 11, 0.45);
     }
+    /* Motion + feedback layer */
+    button { transition: transform .15s ease, filter .15s ease; }
+    button:active:not(:disabled) { transform: scale(.96); }
+    @media (hover: hover) { button:hover:not(:disabled) { filter: brightness(1.12); } }
+    :focus-visible { outline: 3px solid #fbbf24; outline-offset: 2px; }
+    #xpBar { transition: width .7s cubic-bezier(.2, .8, .2, 1); }
+    #toast { position: fixed; top: 76px; left: 50%; transform: translateX(-50%); z-index: 10003; white-space: nowrap; }
+    .fx-float { position: fixed; z-index: 10003; pointer-events: none; font-weight: 900; font-size: 20px; text-shadow: 0 2px 6px rgba(0,0,0,.75); }
+    @media (prefers-reduced-motion: reduce) { *, ::before, ::after { transition-duration: .01ms !important; } }
+    /* Festival motion-graphics banner */
+    #sceneSvg .berry, #sceneSvg .balloon { transform-box: fill-box; transform-origin: center; }
+    #sceneSvg .flag { transform-box: fill-box; transform-origin: 50% 0; }
+    #sceneSvg text { font-family: 'Inter', sans-serif; }
   </style>
 </head>
 <body class="selection:bg-amber-500 selection:text-slate-950">
@@ -188,23 +202,31 @@
       <!-- MAIN NAVIGATION TABS (Visible on Tablet & Laptop; also synced with Mobile Bottom Dock) -->
       <nav class="hidden md:flex items-center gap-1.5 overflow-x-auto custom-scroll py-0.5">
         <button id="navTabWorkbook" data-main-tab="workbook" class="tab-btn active px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold border border-slate-700 transition flex items-center gap-1.5 whitespace-nowrap">
-          <span>🎪</span> <span>All 11 Unit Activities & Pictures</span>
+          <span>🎪</span> <span>1 · Learn: 11 Activities</span>
         </button>
         <button id="navTabFiveWays" data-main-tab="fiveways" class="tab-btn px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold border border-slate-700 transition flex items-center gap-1.5 whitespace-nowrap">
-          <span>🧠</span> <span>5 Ways "How It Happened" Lab</span>
-        </button>
-        <button id="navTabMultiplayer" data-main-tab="multiplayer" class="tab-btn px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold border border-slate-700 transition flex items-center gap-1.5 whitespace-nowrap">
-          <span>🎮</span> <span>Multiplayer Games (4 Modes)</span>
+          <span>🧠</span> <span>2 · 5 Ways Lab</span>
         </button>
         <button id="navTabCgiStudio" data-main-tab="cgistudio" class="tab-btn px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold border border-slate-700 transition flex items-center gap-1.5 whitespace-nowrap">
-          <span>🕶️</span> <span>Full CGI 3D Playground</span>
+          <span>🕶️</span> <span>3 · 3D Studio</span>
+        </button>
+        <button id="navTabMultiplayer" data-main-tab="multiplayer" class="tab-btn px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold border border-slate-700 transition flex items-center gap-1.5 whitespace-nowrap">
+          <span>🎮</span> <span>4 · Play: 4 Games</span>
         </button>
       </nav>
+      <div class="flex items-center gap-2 text-[11px]">
+        <span id="rankLabel" class="font-bold text-amber-300 whitespace-nowrap">🌱 Gooseberry Beginner</span>
+        <div class="flex-1 h-2 rounded-full bg-slate-800 overflow-hidden"><div id="xpBar" class="h-full w-0 rounded-full bg-gradient-to-r from-amber-400 to-emerald-400"></div></div>
+      </div>
     </div>
   </header>
 
   <!-- TOP INTERACTIVE BANNER: MINI CGI SCENE + QUICK "5 WAYS" BAR -->
-  <section class="max-w-7xl mx-auto px-3 pt-4">
+  <section id="heroSection" class="max-w-7xl mx-auto px-3 pt-4">
+    <div class="glass-card rounded-2xl p-3 sm:p-4 border border-amber-500/30 mb-4 text-center">
+      <h2 id="sceneTitle" class="text-xl sm:text-3xl font-black text-amber-200" aria-label="Adding… and adding again!">Adding… and adding again!</h2>
+      <svg id="sceneSvg" viewBox="0 0 700 175" class="w-full h-32 sm:h-44" role="img" aria-label="Anu leaps across tiles 2, 4, 6, 8 and 10 and collects 2 gooseberries each time"></svg>
+    </div>
     <div class="glass-card rounded-2xl p-3 sm:p-4 border border-amber-500/30 grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
       <!-- Left: 3D CGI Live Stage Viewport -->
       <div class="lg:col-span-5 relative rounded-xl overflow-hidden bg-slate-950 border border-slate-700 h-56 sm:h-64">
@@ -1389,6 +1411,7 @@
             <div>
               <div class="text-xs font-bold text-amber-300">PLAYER 1 (ANU)</div>
               <div id="mpP1Status" class="text-xs text-slate-300">Ready!</div>
+              <div id="mpP1Streak" class="text-[11px] font-black text-orange-300 h-4"></div>
             </div>
           </div>
           <div id="mpP1Score" class="text-2xl font-black text-amber-300">0</div>
@@ -1399,6 +1422,7 @@
             <div>
               <div id="mpP2Name" class="text-xs font-bold text-cyan-300">PLAYER 2 (ALLEN)</div>
               <div id="mpP2Status" class="text-xs text-slate-300">Ready!</div>
+              <div id="mpP2Streak" class="text-[11px] font-black text-orange-300 h-4"></div>
             </div>
           </div>
           <div id="mpP2Score" class="text-2xl font-black text-cyan-300">0</div>
@@ -1408,7 +1432,7 @@
       <!-- GAME 1: NANMAMUKKU LEAPING RACE -->
       <div id="mpGameRace" class="mp-game-panel space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-2">
-          <p class="text-xs sm:text-sm text-slate-300">🏁 <strong>Rule:</strong> Answer your multiplication/addition prompt to leap forward on the Gooseberry Track! First to reach <strong>Tile 10</strong> wins!</p>
+          <p class="text-xs sm:text-sm text-slate-300">🏁 <strong>Rule:</strong> Answer your multiplication/addition prompt to leap forward on the Gooseberry Track! First to reach <strong>Tile 10</strong> wins! Three right in a row = ⚡ Turbo leap and 🔥 bonus points. Land on a 🍈 tile (4 or 8) for +5.</p>
           <button id="btnResetRaceGame" class="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-amber-300 border border-slate-600">↺ New Race</button>
         </div>
         <canvas id="raceCanvas" height="210" class="w-full rounded-xl bg-slate-950 border border-slate-700"></canvas>
@@ -1441,6 +1465,7 @@
           </div>
           <button id="btnStartBalloonGame" class="px-3 py-1.5 rounded-lg bg-pink-500 hover:bg-pink-400 text-slate-950 font-black text-xs">▶ New Balloon Round</button>
         </div>
+        <div class="h-2 rounded-full bg-slate-800 overflow-hidden"><div id="balloonTimer" class="h-full w-full rounded-full bg-gradient-to-r from-pink-500 to-amber-400"></div></div>
         <canvas id="balloonGameCanvas" height="320" class="w-full rounded-xl bg-slate-950 border border-slate-700 cursor-pointer"></canvas>
       </div>
 
@@ -1505,6 +1530,10 @@
       </div>
     </div>
   </section>
+  <footer class="max-w-7xl mx-auto px-3 pb-6 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400">
+    <span>Created by <strong class="text-amber-300">Faheem Yoonus V K</strong>, ALPS Cherukulathur East</span>
+    <button id="btnNextStep" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-sm">Next: 5 Ways Lab ▶</button>
+  </footer>
   </div><!-- End #appShellWrapper -->
 
   <!-- MOBILE & SMALL TABLET BOTTOM THUMB DOCK NAVIGATION -->
@@ -1512,22 +1541,35 @@
     <div class="grid grid-cols-4 gap-1 max-w-md mx-auto">
       <button data-main-tab="workbook" class="mobile-dock-btn active flex flex-col items-center justify-center py-1 px-1 rounded-xl border border-transparent text-[11px] font-bold transition">
         <span class="text-base leading-none">🎪</span>
-        <span class="mt-0.5 truncate">11 Activities</span>
+        <span class="mt-0.5 truncate">1 Learn</span>
       </button>
       <button data-main-tab="fiveways" class="mobile-dock-btn flex flex-col items-center justify-center py-1 px-1 rounded-xl border border-transparent text-[11px] font-bold text-slate-300 transition">
         <span class="text-base leading-none">🧠</span>
-        <span class="mt-0.5 truncate">5 Ways Lab</span>
-      </button>
-      <button data-main-tab="multiplayer" class="mobile-dock-btn flex flex-col items-center justify-center py-1 px-1 rounded-xl border border-transparent text-[11px] font-bold text-slate-300 transition">
-        <span class="text-base leading-none">🎮</span>
-        <span class="mt-0.5 truncate">Multiplayer</span>
+        <span class="mt-0.5 truncate">2 5 Ways</span>
       </button>
       <button data-main-tab="cgistudio" class="mobile-dock-btn flex flex-col items-center justify-center py-1 px-1 rounded-xl border border-transparent text-[11px] font-bold text-slate-300 transition">
         <span class="text-base leading-none">🕶️</span>
-        <span class="mt-0.5 truncate">3D Studio</span>
+        <span class="mt-0.5 truncate">3 3D Studio</span>
+      </button>
+      <button data-main-tab="multiplayer" class="mobile-dock-btn flex flex-col items-center justify-center py-1 px-1 rounded-xl border border-transparent text-[11px] font-bold text-slate-300 transition">
+        <span class="text-base leading-none">🎮</span>
+        <span class="mt-0.5 truncate">4 Games</span>
       </button>
     </div>
   </nav>
+
+  <div id="toast" class="hidden px-4 py-2 rounded-full bg-slate-900/95 border border-amber-400/60 text-amber-200 font-black text-sm shadow-xl"></div>
+  <div id="winOverlay" class="hidden fixed inset-0 z-[10001] flex items-center justify-center bg-slate-950/80 p-4">
+    <div id="winCard" class="glass-card rounded-3xl p-6 text-center max-w-sm w-full space-y-3 border border-amber-400/50">
+      <div id="winTrophy" class="text-6xl">🏆</div>
+      <h3 id="winTitle" class="text-2xl font-black text-white"></h3>
+      <p id="winSub" class="text-sm text-slate-300"></p>
+      <div class="flex gap-2 justify-center">
+        <button id="winAgain" class="px-4 py-2 rounded-xl bg-amber-500 text-slate-950 font-black text-sm">▶ Play again</button>
+        <button id="winClose" class="px-4 py-2 rounded-xl bg-slate-800 border border-slate-600 text-slate-200 font-bold text-sm">Close</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     let sfxEnabled = true;
@@ -1588,6 +1630,20 @@
           gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
           osc.start(now);
           osc.stop(now + 0.22);
+        } else if (type === 'combo') {
+          osc.type = 'square';
+          [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => osc.frequency.setValueAtTime(f, now + i * 0.06));
+          gain.gain.setValueAtTime(0.1, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+          osc.start(now);
+          osc.stop(now + 0.3);
+        } else if (type === 'win') {
+          osc.type = 'triangle';
+          [392, 523.25, 659.25, 783.99, 659.25, 1046.5].forEach((f, i) => osc.frequency.setValueAtTime(f, now + i * 0.11));
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+          osc.start(now);
+          osc.stop(now + 0.8);
         }
       } catch (e) {}
     }
@@ -1664,6 +1720,168 @@
       requestAnimationFrame(updateVfxLoop);
     }
     requestAnimationFrame(updateVfxLoop);
+
+    // ===== Motion layer (anime.js 3.2.1). Every call is a safe no-op if the library fails to load or the child's device asks for reduced motion. =====
+    const FX = (() => {
+      const on = typeof anime !== 'undefined' && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const run = (make) => { if (!on) return null; try { return anime(make()); } catch (e) { return null; } };
+      const clear = (a) => a.animatables.forEach(x => { x.target.style.transform = ''; });
+      const $ = (id) => document.getElementById(id);
+      let toastTimer = 0;
+      return {
+        on, run, clear,
+        // animate numbers on an object; always finishes (and calls done) even without anime.js
+        tween(obj, props, ms, update, done) {
+          if (!run(() => ({ targets: obj, ...props, duration: ms, easing: 'easeInOutQuad', update, complete: done }))) {
+            Object.assign(obj, props);
+            if (update) update();
+            if (done) done();
+          }
+        },
+        enter(list, gap = 60) {
+          run(() => ({ targets: list, opacity: [0, 1], translateY: [16, 0], duration: 500, delay: anime.stagger(gap), easing: 'easeOutCubic', complete: clear }));
+        },
+        viewIn(view) { this.enter(Array.from(view.children), 70); },
+        pop(el) {
+          if (el) run(() => ({ targets: el, scale: [1, 1.2, 1], duration: 450, easing: 'easeOutQuad', complete: clear }));
+        },
+        shake(el) {
+          if (el) run(() => ({ targets: el, translateX: [0, -9, 9, -6, 6, 0], duration: 380, easing: 'easeInOutSine', complete: clear }));
+        },
+        count(el, to) {
+          const o = { v: parseInt(el.textContent) || 0 };
+          if (!run(() => ({ targets: o, v: to, round: 1, duration: 600, easing: 'easeOutQuad', update: () => { el.textContent = o.v; }, complete: () => { el.textContent = to; } }))) el.textContent = to;
+        },
+        float(text, x, y, color = '#fef08a') {
+          const d = document.createElement('div');
+          d.className = 'fx-float';
+          d.textContent = text;
+          d.style.cssText = `left:${x}px;top:${y}px;color:${color}`;
+          document.body.appendChild(d);
+          if (!run(() => ({ targets: d, translateX: ['-50%', '-50%'], translateY: [0, -70], opacity: [1, 0], scale: [0.8, 1.15], duration: 1100, easing: 'easeOutCubic', complete: () => d.remove() }))) setTimeout(() => d.remove(), 900);
+        },
+        toast(msg) {
+          const t = $('toast');
+          t.textContent = msg;
+          t.classList.remove('hidden');
+          if (on) anime.remove(t);
+          if (!run(() => ({ targets: t, opacity: [0, 1], translateX: ['-50%', '-50%'], translateY: [-24, 0], duration: 450, easing: 'easeOutBack' }))) t.style.opacity = 1;
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(() => {
+            if (!run(() => ({ targets: t, opacity: 0, duration: 400, easing: 'linear', complete: () => t.classList.add('hidden') }))) t.classList.add('hidden');
+          }, 2200);
+        },
+        // one orchestrated page-load moment: header, then the live 3D stage
+        load() {
+          run(() => ({ targets: ['header', '#heroSection'], opacity: [0, 1], translateY: [-14, 0], duration: 650, delay: anime.stagger(140), easing: 'easeOutCubic', complete: clear }));
+        },
+        // called after every "5 ways" re-render
+        fiveWays(badge) {
+          if (!on) return;
+          this.pop(badge);
+          const seq = (targets, from, gap) => run(() => ({ targets, ...from, duration: 450, delay: gap, easing: 'easeOutCubic' }));
+          seq('#miniFiveWaysStrip > div', { opacity: [0, 1], translateY: [10, 0] }, anime.stagger(60));
+          seq('#way1AdditionVisual .flex > div', { opacity: [0, 1], translateX: [-14, 0] }, anime.stagger(45));
+          seq('#way2GroupsVisual > div', { opacity: [0, 1], scale: [0.8, 1] }, anime.stagger(40));
+          seq('#way3NumberLineVisual path', { opacity: [0, 1] }, anime.stagger(90));
+          seq('#way4ArrayVisual .inline-grid > div', { opacity: [0, 1], scale: [0, 1] }, anime.stagger(12, { from: 'center' }));
+          seq('#way5DecompositionVisual > div', { opacity: [0, 1], translateY: [10, 0] }, anime.stagger(80));
+          // a dot hops along the number-line arcs: multiplication as equal jumps
+          const svg = document.querySelector('#way3NumberLineVisual svg');
+          const arcs = svg ? svg.querySelectorAll('path') : [];
+          if (arcs.length) {
+            try {
+              const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+              dot.setAttribute('r', 7);
+              dot.setAttribute('fill', '#fbbf24');
+              dot.setAttribute('stroke', '#fff');
+              dot.style.opacity = 0;
+              svg.appendChild(dot);
+              const tl = anime.timeline({ easing: 'easeInOutSine', duration: 480 });
+              arcs.forEach((p, i) => {
+                const f = anime.path(p);
+                tl.add({ targets: dot, translateX: f('x'), translateY: f('y'), begin: () => { dot.style.opacity = 1; } });
+              });
+            } catch (e) { /* the static arcs still show the jumps */ }
+          }
+        },
+        win(title, sub, again) {
+          const o = $('winOverlay');
+          $('winTitle').textContent = title;
+          $('winSub').textContent = sub;
+          o.classList.remove('hidden');
+          const close = () => o.classList.add('hidden');
+          $('winClose').onclick = close;
+          $('winAgain').onclick = () => { close(); again(); };
+          playSound('win');
+          run(() => ({ targets: o, opacity: [0, 1], duration: 250, easing: 'linear' }));
+          run(() => ({ targets: '#winCard', scale: [0.6, 1], opacity: [0, 1], duration: 800, easing: 'easeOutElastic(1, .6)' }));
+          run(() => ({ targets: '#winTrophy', rotate: [-20, 20, -10, 0], translateY: [-30, 0], duration: 900, delay: 250, easing: 'easeOutBounce' }));
+          for (let i = 0; i < 5; i++) setTimeout(() => spawnVfxBurst(innerWidth * (0.15 + Math.random() * 0.7), innerHeight * (0.2 + Math.random() * 0.35), 40), i * 220);
+        }
+      };
+    })();
+
+    const NEXT_STEP = {
+      workbook: { to: 'fiveways', label: 'Next: 5 Ways Lab ▶' },
+      fiveways: { to: 'cgistudio', label: 'Next: 3D Studio ▶' },
+      cgistudio: { to: 'multiplayer', label: 'Next: Play the Games ▶' },
+      multiplayer: { to: 'workbook', label: '↺ Back to the Activities' }
+    };
+    let currentTab = 'workbook';
+
+    // ===== Festival motion-graphics banner: inline SVG animated with anime.js (static picture if motion is off) =====
+    const sceneTileX = (i) => 70 + (i - 1) * 56 + 26; // tile centre
+    function buildFestivalScene() {
+      const svg = document.getElementById('sceneSvg');
+      const title = document.getElementById('sceneTitle');
+      if (!svg || !title) return;
+      title.innerHTML = Array.from(title.textContent).map(c => c === ' ' ? ' ' : `<span class="inline-block">${c}</span>`).join('');
+      const cols = ['#f43f5e', '#fbbf24', '#34d399', '#38bdf8', '#c084fc'];
+      let h = '<path d="M0 8 Q350 92 700 8" fill="none" stroke="#fbbf24" stroke-width="2"/>';
+      for (let i = 0; i < 14; i++) {
+        const t = (i + 0.5) / 14, x = t * 700, y = 8 + 168 * t * (1 - t);
+        h += `<polygon class="flag" points="${x - 9},${y} ${x + 9},${y} ${x},${y + 22}" fill="${cols[i % 5]}"/>`;
+      }
+      h += '<rect x="0" y="162" width="700" height="13" fill="#064e3b"/>';
+      for (let i = 1; i <= 10; i++) {
+        h += `<rect x="${sceneTileX(i) - 26}" y="140" width="52" height="22" rx="5" fill="${i % 2 ? '#334155' : '#10b981'}"/>`
+          + `<text x="${sceneTileX(i)}" y="156" font-size="11" font-weight="800" fill="#fff" text-anchor="middle">${i}</text>`;
+      }
+      for (let k = 1; k <= 5; k++) h += `<text class="berry" data-k="${k}" x="${sceneTileX(2 * k) + 20}" y="136" font-size="16" text-anchor="middle">🍈</text>`;
+      [14, 38, 648, 676].forEach((bx, i) => {
+        h += `<g class="balloon"><ellipse cx="${bx}" cy="${100 + (i % 2) * 14}" rx="11" ry="14" fill="${cols[i]}"/><path d="M${bx} ${114 + (i % 2) * 14} q-3 12 3 22" stroke="#94a3b8" fill="none"/></g>`;
+      });
+      h += '<text id="sceneCount" x="12" y="70" font-size="16" font-weight="900" fill="#fef08a">🍈 10</text>'
+        + '<text id="sceneAnu" x="62" y="138" font-size="28" text-anchor="middle">👧</text>';
+      svg.innerHTML = h;
+    }
+
+    function playFestivalScene() {
+      if (!FX.on) return;
+      document.querySelectorAll('#sceneSvg .berry').forEach(b => { b.style.opacity = 0; });
+      FX.run(() => ({ targets: '#sceneTitle span', translateY: [26, 0], opacity: [0, 1], duration: 700, delay: anime.stagger(40), easing: 'easeOutBack' }));
+      FX.run(() => ({ targets: '#sceneSvg .flag', rotate: [-9, 9], duration: 1100, delay: anime.stagger(80), direction: 'alternate', loop: true, easing: 'easeInOutSine' }));
+      FX.run(() => ({ targets: '#sceneSvg .balloon', translateY: [-7, 7], duration: 1800, delay: anime.stagger(220), direction: 'alternate', loop: true, easing: 'easeInOutSine' }));
+      try {
+        // Anu hops 2, 4, 6, 8, 10: each landing pops a gooseberry and adds 2 to the counter
+        const label = document.getElementById('sceneCount'), n = { v: 0 };
+        const show = () => { label.textContent = `🍈 ${n.v}`; };
+        show();
+        const tl = anime.timeline({ loop: true, easing: 'linear' });
+        let prev = 0;
+        for (let k = 1; k <= 5; k++) {
+          const x = sceneTileX(2 * k) - 62;
+          tl.add({ targets: '#sceneAnu', translateX: [prev, x], translateY: [{ value: -34, duration: 260, easing: 'easeOutQuad' }, { value: 0, duration: 260, easing: 'easeInQuad' }], duration: 520, easing: 'easeInOutSine' }, k === 1 ? 500 : '+=140');
+          tl.add({ targets: `#sceneSvg .berry[data-k="${k}"]`, opacity: [0, 1], scale: [0, 1.25], duration: 320, easing: 'easeOutBack' }, '-=80');
+          tl.add({ targets: n, v: [2 * (k - 1), 2 * k], round: 1, duration: 320, easing: 'linear', update: show }, '-=320');
+          prev = x;
+        }
+        tl.add({ targets: '#sceneAnu', translateX: [prev, 0], duration: 500, easing: 'easeInOutQuad' }, '+=900')
+          .add({ targets: '#sceneSvg .berry', opacity: [1, 0], scale: [1.25, 0], duration: 300, delay: anime.stagger(50) }, '-=500')
+          .add({ targets: n, v: [10, 0], round: 1, duration: 400, easing: 'easeInQuad', update: show }, '-=400');
+      } catch (e) { /* scene stays a still picture */ }
+    }
 
     let threeScene, threeCamera, threeRenderer, threeGroup;
     let currentCgiMode = 'leaping';
@@ -2035,9 +2253,12 @@
           </div>
         `;
       }
+
+      FX.fiveWays(pBadge);
     }
 
     let colouredAnuTiles = new Set();
+    let anuPop = 0, anuShake = 0;
 
     function renderAnuRectangles() {
       const grid = document.getElementById('anuRectanglesGrid');
@@ -2060,16 +2281,20 @@
         btn.addEventListener('click', () => {
           if (isEven) {
             colouredAnuTiles.add(i);
+            anuPop = i;
             playSound('jump');
             const rect = btn.getBoundingClientRect();
             spawnVfxBurst(rect.left + rect.width / 2, rect.top + rect.height / 2, 18, '+2 🍈');
           } else {
             playSound('wrong');
+            anuShake = i;
           }
           renderAnuRectangles();
           updateAnuTrackStatus();
         });
         grid.appendChild(btn);
+        if (i === anuPop) { FX.pop(btn); anuPop = 0; }
+        if (i === anuShake) { FX.shake(btn); anuShake = 0; }
       }
     }
 
@@ -2101,6 +2326,7 @@
           <div class="text-[11px] font-extrabold text-emerald-300">${t * 3} leaves</div>
         `;
         container.appendChild(div);
+        if (t === sadyaTableCount && t > 6) FX.pop(div);
       }
       if (summary) {
         const addStr = Array(sadyaTableCount).fill(3).join(' + ');
@@ -2187,6 +2413,7 @@
           if (triggerBurst) {
             const rect = inputEl.getBoundingClientRect();
             spawnVfxBurst(rect.left + rect.width / 2, rect.top + rect.height / 2, 20, '⭐ Correct!');
+            FX.pop(inputEl);
             playSound('success');
           }
         }
@@ -2194,27 +2421,84 @@
       } else {
         inputEl.classList.remove('correct');
         inputEl.classList.add('wrong');
-        if (triggerBurst) playSound('wrong');
+        if (triggerBurst) {
+          playSound('wrong');
+          if (actual.length >= expected.length) FX.shake(inputEl); // only once the answer is as long as expected
+        }
         return false;
       }
     }
 
+    const RANKS = [[0, '🌱 Gooseberry Beginner'], [20, '🍈 Village Helper'], [50, '🎈 Festival Star'], [90, '🏆 Math Champion']];
+    let lastRank = RANKS[0][1];
     function updateGlobalStars() {
       const el = document.getElementById('globalStarsCount');
-      if (el) el.textContent = earnedInputs.size * 2;
+      const n = earnedInputs.size * 2;
+      if (el) { FX.count(el, n); FX.pop(el.parentElement); }
+      document.getElementById('xpBar').style.width = Math.min(100, (n / 110) * 100) + '%';
+      const rank = RANKS.filter(r => n >= r[0]).pop()[1];
+      document.getElementById('rankLabel').textContent = rank;
+      if (rank !== lastRank) { lastRank = rank; FX.toast(`Level up! ${rank}`); playSound('combo'); }
     }
 
     let vsBotMode = false;
     let mpScores = { p1: 0, p2: 0 };
 
+    // ===== Shared game helpers: streak combos, flying points, winner screen =====
+    const streak = { p1: 0, p2: 0 };
+    const G = { p1: 0, p2: 0 }; // points in the game being played
+    const PN = { p1: '👧 Anu', p2: '👦 Allen' };
+    const rand = (n) => Math.floor(Math.random() * n);
+    const centreTop = (el) => { const r = el.getBoundingClientRect(); return [r.left + r.width / 2, r.top]; };
+
     function updateMpScoreboard(p1Msg, p2Msg) {
-      document.getElementById('mpP1Score').textContent = mpScores.p1;
-      document.getElementById('mpP2Score').textContent = mpScores.p2;
+      [['p1', 'mpP1'], ['p2', 'mpP2']].forEach(([k, id]) => {
+        const s = document.getElementById(id + 'Score');
+        if (+s.textContent !== mpScores[k]) { FX.count(s, mpScores[k]); FX.pop(s); }
+        document.getElementById(id + 'Streak').textContent = streak[k] >= 2 ? `🔥 ${streak[k]} in a row` : '';
+      });
       if (p1Msg) document.getElementById('mpP1Status').textContent = p1Msg;
       if (p2Msg) document.getElementById('mpP2Status').textContent = p2Msg;
     }
 
-    let raceState = { p1Pos: 0, p2Pos: 0, over: false, p1Q: null, p2Q: null };
+    // 3 right answers in a row = x2 points, 6 = x3. `flat` skips the combo (used for fixed bonuses).
+    function award(pk, base, x, y, flat) {
+      let mult = 1;
+      if (!flat) {
+        streak[pk]++;
+        mult = Math.min(3, 1 + Math.floor(streak[pk] / 3));
+      }
+      const pts = base * mult;
+      mpScores[pk] += pts;
+      G[pk] += pts;
+      updateMpScoreboard();
+      FX.float(`+${pts}${mult > 1 ? ` 🔥×${mult}` : ''}`, x, y, mult > 1 ? '#fb923c' : '#fef08a');
+      if (!flat && (streak[pk] === 3 || streak[pk] === 6)) {
+        FX.toast(`🔥 ${PN[pk]} is on fire! Points ×${mult}`);
+        playSound('combo');
+      }
+    }
+
+    function miss(pk, el) {
+      streak[pk] = 0;
+      updateMpScoreboard();
+      FX.shake(el);
+      playSound('wrong');
+    }
+
+    function newGame() {
+      G.p1 = G.p2 = 0;
+      streak.p1 = streak.p2 = 0;
+      updateMpScoreboard();
+    }
+
+    function finishGame(again) {
+      const w = G.p1 === G.p2 ? null : (G.p1 > G.p2 ? 'p1' : 'p2');
+      FX.win(w ? `${PN[w]} wins!` : "It's a tie!", `${PN.p1} ${G.p1}  –  ${G.p2} ${PN.p2}`, again);
+    }
+
+    // ===== Game 1: Leaping Race =====
+    let raceState = null;
 
     function makeChapterQuestion() {
       const g = 2 + Math.floor(Math.random() * 8);
@@ -2238,21 +2522,23 @@
 
     function drawRaceCanvas() {
       const canvas = document.getElementById('raceCanvas');
-      if (!canvas) return;
+      if (!canvas || !raceState) return;
       const ctx = canvas.getContext('2d');
       const w = (canvas.width = canvas.clientWidth || 700);
       const h = canvas.height;
       ctx.clearRect(0, 0, w, h);
 
       [0, 1].forEach(lane => {
+        const n = lane + 1;
         const yBase = lane === 0 ? 35 : 125;
         ctx.fillStyle = lane === 0 ? 'rgba(245, 158, 11, 0.12)' : 'rgba(6, 182, 212, 0.12)';
         ctx.fillRect(15, yBase, w - 30, 62);
 
         const padX = w < 500 ? 22 : 35;
         const tileW = w < 500 ? Math.max(20, Math.floor((w - padX * 2) / 11.5)) : 32;
+        const xAt = (t) => padX + (t * (w - padX * 2 - 10)) / 10;
         for (let t = 0; t <= 10; t++) {
-          const x = padX + (t * (w - padX * 2 - 10)) / 10;
+          const x = xAt(t);
           ctx.fillStyle = t === 10 ? '#10b981' : '#1e293b';
           ctx.strokeStyle = lane === 0 ? '#f59e0b' : '#22d3ee';
           ctx.lineWidth = 2;
@@ -2265,13 +2551,19 @@
           ctx.font = w < 500 ? 'bold 9px Inter' : 'bold 11px Inter';
           ctx.textAlign = 'center';
           ctx.fillText(t === 0 ? (w < 500 ? 'GO' : 'START') : String(t), x, yBase + 36);
+          if (t === 4 || t === 8 || t === 10) {
+            ctx.font = '13px sans-serif';
+            ctx.fillText(t === 10 ? '🏁' : '🍈', x, yBase + 8);
+          }
         }
 
-        const pos = lane === 0 ? raceState.p1Pos : raceState.p2Pos;
-        const px = padX + (pos * (w - padX * 2 - 10)) / 10;
+        // the runner hops in an arc between its start and end tile
+        const d = raceState['d' + n], f = raceState['f' + n], to = raceState['t' + n];
+        const prog = to === f ? 1 : Math.min(1, Math.max(0, (d - f) / (to - f)));
+        const lift = Math.sin(Math.PI * prog) * 30;
         ctx.font = '26px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(lane === 0 ? '👧' : '👦', px, yBase + 38);
+        ctx.fillText(lane === 0 ? '👧' : '👦', xAt(d), yBase + 38 - lift);
       });
     }
 
@@ -2293,52 +2585,60 @@
         btn.addEventListener('click', (e) => handleRaceAnswer(playerKey, opt, e));
         optEl.appendChild(btn);
       });
+      FX.enter(Array.from(optEl.children), 40);
     }
 
-    function handleRaceAnswer(playerKey, chosen, ev) {
-      if (raceState.over) return;
-      const q = playerKey === 'p1' ? raceState.p1Q : raceState.p2Q;
+    function handleRaceAnswer(pk, chosen, ev) {
+      const s = raceState;
+      const n = pk === 'p1' ? 1 : 2;
+      if (s.over || s.busy[pk]) return;
+      const q = s['p' + n + 'Q'];
       if (!q) return;
 
-      if (chosen === q.ans) {
-        playSound('jump');
-        if (playerKey === 'p1') {
-          raceState.p1Pos = Math.min(10, raceState.p1Pos + 2);
-          mpScores.p1 += 10;
-          document.getElementById('raceP1PosBadge').textContent = `Tile: ${raceState.p1Pos} / 10`;
-        } else {
-          raceState.p2Pos = Math.min(10, raceState.p2Pos + 2);
-          mpScores.p2 += 10;
-          document.getElementById('raceP2PosBadge').textContent = `Tile: ${raceState.p2Pos} / 10`;
-        }
-        if (ev && ev.clientX) spawnVfxBurst(ev.clientX, ev.clientY, 22, '+2 Leaps!');
-        drawRaceCanvas();
+      const anchor = (ev && ev.currentTarget) || document.getElementById(`raceP${n}Question`);
+      if (chosen !== q.ans) { miss(pk, anchor); return; }
 
-        if (raceState.p1Pos >= 10 || raceState.p2Pos >= 10) {
-          raceState.over = true;
-          const winner = raceState.p1Pos >= 10 ? '👧 Player 1 (Anu)' : '👦 Player 2 (Allen)';
-          updateMpScoreboard(`${winner} Wins Race! 🏆`, `${winner} Wins Race! 🏆`);
-          spawnVfxBurst(window.innerWidth / 2, window.innerHeight / 3, 70, `${winner} WINS!`);
-          playSound('success');
+      const [x, y] = centreTop(anchor);
+      const turbo = streak[pk] >= 2; // this answer is the 3rd in a row
+      playSound('jump');
+      award(pk, 10, x, y);
+      if (turbo) FX.toast('⚡ Turbo leap! +1 tile');
+
+      const to = Math.min(10, s['p' + n + 'Pos'] + (turbo ? 3 : 2));
+      s['f' + n] = s['d' + n];
+      s['t' + n] = to;
+      s['p' + n + 'Pos'] = to;
+      document.getElementById(`raceP${n}PosBadge`).textContent = `Tile: ${to} / 10`;
+      s.busy[pk] = true;
+
+      FX.tween(s, { ['d' + n]: to }, 650, drawRaceCanvas, () => {
+        s.busy[pk] = false;
+        if (to === 4 || to === 8) {
+          award(pk, 5, x, y - 34, true);
+          playSound('pop');
+        }
+        if (to >= 10) {
+          s.over = true;
+          updateMpScoreboard(pk === 'p1' ? 'Winner! 🏆' : 'Good race!', pk === 'p2' ? 'Winner! 🏆' : 'Good race!');
+          FX.win(`${PN[pk]} wins the race!`, `${PN.p1} ${G.p1}  –  ${G.p2} ${PN.p2}`, resetRaceGame);
           return;
         }
         updateMpScoreboard('Leaping ahead!', 'Keep going!');
-        renderPlayerQuestion(playerKey);
+        renderPlayerQuestion(pk);
 
-        if (vsBotMode && playerKey === 'p1' && !raceState.over) {
+        if (vsBotMode && pk === 'p1') {
           setTimeout(() => {
-            if (!raceState.over && raceState.p2Q) {
-              handleRaceAnswer('p2', raceState.p2Q.ans, null);
-            }
-          }, 700);
+            if (raceState.over || !raceState.p2Q) return;
+            if (Math.random() < 0.25) miss('p2', document.getElementById('raceP2Question'));
+            else handleRaceAnswer('p2', raceState.p2Q.ans, null);
+          }, 900);
         }
-      } else {
-        playSound('wrong');
-      }
+      });
     }
 
     function resetRaceGame() {
-      raceState = { p1Pos: 0, p2Pos: 0, over: false, p1Q: null, p2Q: null };
+      raceState = { p1Pos: 0, p2Pos: 0, d1: 0, d2: 0, f1: 0, f2: 0, t1: 0, t2: 0, over: false, busy: { p1: false, p2: false }, p1Q: null, p2Q: null };
+      newGame();
       document.getElementById('raceP1PosBadge').textContent = 'Tile: 0 / 10';
       document.getElementById('raceP2PosBadge').textContent = 'Tile: 0 / 10';
       renderPlayerQuestion('p1');
@@ -2346,54 +2646,107 @@
       drawRaceCanvas();
     }
 
+    // ===== Game 2: Balloon Pop — 6 timed rounds, players alternate =====
+    const BALLOON_ROUNDS = 6;
+    const BALLOON_MS = 12000;
     let balloonsList = [];
-    let balloonTarget = { g: 3, s: 3, ans: 9, turn: 'p1' };
+    let balloonPops = [];
+    let balloonTarget = { ans: 0, turn: 'p1' };
     let balloonAnimId = null;
+    let balloonRound = 0;
+    let balloonLocked = true;
+    let balloonTimeout = null;
+
+    function newBalloonMatch() {
+      newGame();
+      balloonRound = 0;
+      startBalloonGame();
+    }
 
     function startBalloonGame() {
-      const g = 2 + Math.floor(Math.random() * 6);
-      const s = 2 + Math.floor(Math.random() * 4);
-      balloonTarget = { g, s, ans: g * s, turn: balloonTarget.turn === 'p1' ? 'p2' : 'p1' };
-      const banner = document.getElementById('balloonTargetBanner');
-      if (banner) {
-        banner.innerHTML = `🎯 <strong>${balloonTarget.turn === 'p1' ? '👧 Player 1' : '👦 Player 2'} Target:</strong> Pop the balloon bunch equal to <span class="text-amber-300 underline">${balloonTarget.ans}</span>!`;
-      }
+      clearTimeout(balloonTimeout);
+      if (balloonRound >= BALLOON_ROUNDS) { balloonLocked = true; return finishGame(newBalloonMatch); }
+      balloonRound++;
+      balloonLocked = false;
+      const turn = balloonRound % 2 ? 'p1' : 'p2';
+      const g = 2 + rand(6);
+      const s = 2 + rand(4);
+      balloonTarget = { ans: g * s, turn };
+      document.getElementById('balloonTargetBanner').innerHTML =
+        `🎈 <strong>Round ${balloonRound}/${BALLOON_ROUNDS} — ${PN[turn]}:</strong> pop the bunch worth <span class="text-amber-300 underline">${g * s}</span>!`;
 
-      balloonsList = [];
       const colors = ['#f43f5e', '#10b981', '#eab308', '#38bdf8', '#a855f7'];
+      const speed = 1 + balloonRound * 0.15; // balloons rise faster every round
+      balloonPops = [];
+      balloonsList = [];
       for (let i = 0; i < 6; i++) {
-        const isCorrect = i === 0;
-        const bg = isCorrect ? g : 2 + Math.floor(Math.random() * 6);
-        const bs = isCorrect ? s : 2 + Math.floor(Math.random() * 4);
+        const bg = i === 0 ? g : 2 + rand(6);
+        const bs = i === 0 ? s : 2 + rand(4);
         balloonsList.push({
-          x: 70 + i * 105,
-          y: 160 + (i % 2) * 60,
-          vy: -0.45 - Math.random() * 0.4,
-          label: `${bg} × ${bs}`,
-          val: bg * bs,
-          color: colors[i % colors.length],
-          popped: false
+          x: 0, y: 160 + (i % 2) * 60,
+          vy: -(0.45 + Math.random() * 0.4) * speed,
+          label: `${bg} × ${bs}`, val: bg * bs,
+          color: colors[i % colors.length], popped: false
         });
       }
       balloonsList.sort(() => Math.random() - 0.5);
-      balloonsList.forEach((b, idx) => { b.x = 75 + idx * 105; });
+
+      const bar = document.getElementById('balloonTimer');
+      bar.style.transition = 'none';
+      bar.style.width = '100%';
+      void bar.offsetWidth;
+      bar.style.transition = `width ${BALLOON_MS}ms linear`;
+      bar.style.width = '0%';
+      balloonTimeout = setTimeout(balloonTimeUp, BALLOON_MS);
 
       if (balloonAnimId) cancelAnimationFrame(balloonAnimId);
       animateBalloonCanvas();
     }
 
+    function balloonTimeUp() {
+      if (balloonLocked || !document.getElementById('balloonGameCanvas').offsetParent) return;
+      balloonLocked = true;
+      miss(balloonTarget.turn, document.getElementById('balloonGameCanvas'));
+      FX.toast("⏰ Time's up!");
+      balloonTimeout = setTimeout(startBalloonGame, 1000);
+    }
+
+    function balloonPointer(e) {
+      if (balloonLocked) return;
+      const c = e.currentTarget;
+      const rect = c.getBoundingClientRect();
+      const cx = (e.clientX - rect.left) * c.width / Math.max(1, rect.width);
+      const cy = (e.clientY - rect.top) * c.height / Math.max(1, rect.height);
+      const b = balloonsList.find(k => !k.popped && Math.hypot(cx - k.x, cy - k.y) < 44);
+      if (!b) return;
+      b.popped = true;
+      balloonPops.push({ x: b.x, y: b.y, t: 0, color: b.color });
+      const pk = balloonTarget.turn;
+      if (b.val === balloonTarget.ans) {
+        balloonLocked = true;
+        clearTimeout(balloonTimeout);
+        playSound('success');
+        award(pk, 20, e.clientX, e.clientY);
+        spawnVfxBurst(e.clientX, e.clientY, 35, `🎈 ${b.label} = ${b.val}`);
+        balloonTimeout = setTimeout(startBalloonGame, 800);
+      } else {
+        playSound('pop');
+        miss(pk, c);
+      }
+    }
+
     function animateBalloonCanvas() {
       const canvas = document.getElementById('balloonGameCanvas');
-      if (!canvas) return;
+      if (!canvas || !canvas.offsetParent) { balloonAnimId = null; return; } // tab hidden: stop drawing
       const ctx = canvas.getContext('2d');
       const w = (canvas.width = canvas.clientWidth || 700);
       const h = canvas.height;
       ctx.clearRect(0, 0, w, h);
 
       balloonsList.forEach((b, idx) => {
-        if (b.popped) return;
         const padX = w < 480 ? 36 : 65;
         b.x = padX + (idx * (w - padX * 2)) / Math.max(1, balloonsList.length - 1);
+        if (b.popped) return;
         b.y += b.vy;
         if (b.y < 55) b.y = h - 40;
 
@@ -2417,15 +2770,30 @@
         ctx.fillText(b.label, b.x, b.y + 3);
       });
 
+      // expanding pop rings
+      balloonPops = balloonPops.filter(p => (p.t += 0.05) < 1);
+      balloonPops.forEach(p => {
+        ctx.globalAlpha = 1 - p.t;
+        ctx.strokeStyle = p.color;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 20 + p.t * 50, 0, Math.PI * 2);
+        ctx.stroke();
+      });
+      ctx.globalAlpha = 1;
+
       balloonAnimId = requestAnimationFrame(animateBalloonCanvas);
     }
 
+    // ===== Game 3: Grid Conquest =====
     let gridGameTurn = 'p1';
     let gridGameTarget = 12;
 
     function initGridConquest() {
       const board = document.getElementById('mpConquestBoard');
       if (!board) return;
+      newGame();
+      gridGameTurn = 'p1';
       const pairs = [
         { expr: '2 × 6', val: 12 }, { expr: '3 × 4', val: 12 }, { expr: '6 + 6', val: 12 },
         { expr: '3 × 6', val: 18 }, { expr: '6 + 6 + 6', val: 18 }, { expr: '9 doubled', val: 18 },
@@ -2433,7 +2801,7 @@
         { expr: '5 × 4', val: 20 }, { expr: '10 doubled', val: 20 }, { expr: '4 × 5', val: 20 },
         { expr: '6 × 10', val: 60 }, { expr: '15 × 4', val: 60 }, { expr: '20 × 3', val: 60 },
         { expr: '5 × 3', val: 15 }, { expr: '3 × 5', val: 15 }, { expr: '3 + 3 + 3 + 3 + 3', val: 15 }
-      ];
+      ].sort(() => Math.random() - 0.5);
       board.innerHTML = '';
       pairs.forEach(item => {
         const btn = document.createElement('button');
@@ -2442,26 +2810,17 @@
         btn.dataset.val = item.val;
         btn.addEventListener('click', (e) => {
           if (btn.dataset.claimed) return;
-          if (Number(btn.dataset.val) === gridGameTarget) {
-            btn.dataset.claimed = gridGameTurn;
-            playSound('success');
-            if (gridGameTurn === 'p1') {
-              btn.className = 'p-3 rounded-xl bg-amber-500 text-slate-950 font-black text-xs sm:text-sm';
-              btn.textContent = `👧 ${item.expr} = ${item.val}`;
-              mpScores.p1 += 15;
-              gridGameTurn = 'p2';
-            } else {
-              btn.className = 'p-3 rounded-xl bg-cyan-500 text-slate-950 font-black text-xs sm:text-sm';
-              btn.textContent = `👦 ${item.expr} = ${item.val}`;
-              mpScores.p2 += 15;
-              gridGameTurn = 'p1';
-            }
-            spawnVfxBurst(e.clientX, e.clientY, 24, `+15 Pts!`);
-            updateMpScoreboard();
-            pickNextGridTarget();
-          } else {
-            playSound('wrong');
-          }
+          const pk = gridGameTurn;
+          if (Number(btn.dataset.val) !== gridGameTarget) { miss(pk, btn); return; }
+          btn.dataset.claimed = pk;
+          playSound('success');
+          btn.className = `p-3 rounded-xl ${pk === 'p1' ? 'bg-amber-500' : 'bg-cyan-500'} text-slate-950 font-black text-xs sm:text-sm`;
+          btn.textContent = `${pk === 'p1' ? '👧' : '👦'} ${item.expr} = ${item.val}`;
+          FX.run(() => ({ targets: btn, rotateY: [90, 0], scale: [0.8, 1], duration: 500, easing: 'easeOutBack', complete: FX.clear }));
+          award(pk, 15, e.clientX, e.clientY);
+          spawnVfxBurst(e.clientX, e.clientY, 24, '+15 Pts!');
+          gridGameTurn = pk === 'p1' ? 'p2' : 'p1';
+          pickNextGridTarget();
         });
         board.appendChild(btn);
       });
@@ -2474,6 +2833,7 @@
       const clueEl = document.getElementById('gridClueBanner');
       if (unclaimed.length === 0) {
         if (turnEl) turnEl.textContent = '🎉 Board Complete! Great Conquest!';
+        setTimeout(() => finishGame(initGridConquest), 600);
         return;
       }
       const pick = unclaimed[Math.floor(Math.random() * unclaimed.length)];
@@ -2486,14 +2846,24 @@
       }
     }
 
+    // ===== Game 4: Super Sixer — 6 balls, 3 each; a wrong answer is OUT =====
+    const CRICKET_BALLS = 6;
     let cricketTurn = 'p1';
+    let cricketBall = 0;
+    let cricketBusy = false;
+    const cricketFx = { ball: null, label: '', down: false };
 
     function initCricketGame() {
+      newGame();
+      cricketTurn = 'p1';
+      cricketBall = 0;
+      cricketBusy = false;
+      Object.assign(cricketFx, { ball: null, label: '', down: false });
       nextCricketDelivery();
-      drawCricketStadium(0);
+      drawCricketStadium();
     }
 
-    function drawCricketStadium(shotRuns = 0) {
+    function drawCricketStadium() {
       const canvas = document.getElementById('cricketGameCanvas');
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
@@ -2506,23 +2876,55 @@
       ctx.fillStyle = '#d97706';
       ctx.fillRect(w * 0.2, h - 42, w * 0.6, 16);
 
-      ctx.font = '30px sans-serif';
-      ctx.fillText('🤾', w * 0.22, h - 38);
-      ctx.fillText('🏏', w * 0.75, h - 38);
-
-      if (shotRuns > 0) {
-        ctx.strokeStyle = '#fbbf24';
-        ctx.lineWidth = 3;
+      ctx.strokeStyle = '#fde047';
+      ctx.lineWidth = 4;
+      for (let i = -1; i <= 1; i++) {
+        const sx = w * 0.8 + i * 9;
         ctx.beginPath();
-        ctx.moveTo(w * 0.75, h - 50);
-        ctx.quadraticCurveTo(w * 0.45, 20, w * 0.1, h - 75);
+        ctx.moveTo(sx, h - 30);
+        ctx.lineTo(cricketFx.down ? sx + (i + 2) * 12 : sx, cricketFx.down ? h - 16 : h - 64);
         ctx.stroke();
-
-        ctx.fillStyle = '#fef08a';
-        ctx.font = '900 22px Inter';
-        ctx.textAlign = 'center';
-        ctx.fillText(`💥 ${shotRuns} RUNS!`, w * 0.5, 48);
       }
+
+      ctx.font = '30px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('🤾', w * 0.2, h - 38);
+      ctx.fillText('🏏', w * 0.72, h - 38);
+
+      if (cricketFx.ball) {
+        ctx.fillStyle = '#ef4444';
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(cricketFx.ball.x, cricketFx.ball.y, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+      if (cricketFx.label) {
+        ctx.fillStyle = '#fef08a';
+        ctx.font = '900 26px Inter';
+        ctx.fillText(cricketFx.label, w * 0.5, 48);
+      }
+    }
+
+    // ball travels along a curve a -> b with control point c
+    function cricketFlight(a, c, b, ms, done) {
+      const o = { p: 0 };
+      FX.tween(o, { p: 1 }, ms, () => {
+        const p = o.p, q = 1 - p;
+        cricketFx.ball = { x: q * q * a[0] + 2 * q * p * c[0] + p * p * b[0], y: q * q * a[1] + 2 * q * p * c[1] + p * p * b[1] };
+        drawCricketStadium();
+      }, done);
+    }
+
+    function endBall() {
+      cricketBall++;
+      cricketBusy = false;
+      Object.assign(cricketFx, { ball: null, label: '', down: false });
+      if (cricketBall >= CRICKET_BALLS) { drawCricketStadium(); return finishGame(initCricketGame); }
+      cricketTurn = cricketTurn === 'p1' ? 'p2' : 'p1';
+      nextCricketDelivery();
+      drawCricketStadium();
     }
 
     function nextCricketDelivery() {
@@ -2539,6 +2941,8 @@
       const gridEl = document.getElementById('cricketOptionsGrid');
       if (!promptEl || !gridEl) return;
 
+      document.getElementById('cricketTurnBanner').textContent =
+        `🏏 Ball ${cricketBall + 1} of ${CRICKET_BALLS} — ${PN[cricketTurn]} batting. Right answer = boundary, wrong answer = OUT!`;
       promptEl.innerHTML = `<span class="text-amber-300">${cricketTurn === 'p1' ? '👧 Player 1 Batting' : '👦 Player 2 Batting'}:</span> ${item.q}`;
       const opts = Array.from(new Set([item.ans, item.ans + 6, item.ans - 4, item.ans + 12])).sort((a, b) => a - b);
       gridEl.innerHTML = '';
@@ -2547,18 +2951,31 @@
         btn.className = 'py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-rose-600 border border-slate-600 font-black text-white transition';
         btn.textContent = opt;
         btn.addEventListener('click', (e) => {
-          if (opt === item.ans) {
-            playSound('success');
-            if (cricketTurn === 'p1') mpScores.p1 += item.runs;
-            else mpScores.p2 += item.runs;
-            cricketTurn = cricketTurn === 'p1' ? 'p2' : 'p1';
-            updateMpScoreboard();
-            drawCricketStadium(item.runs);
-            spawnVfxBurst(e.clientX, e.clientY, 32, `🏏 +${item.runs} SIXER!`);
-            setTimeout(nextCricketDelivery, 900);
-          } else {
-            playSound('wrong');
-          }
+          if (cricketBusy) return;
+          cricketBusy = true;
+          const pk = cricketTurn;
+          const ok = opt === item.ans;
+          const x = e.clientX, y = e.clientY;
+          const canvas = document.getElementById('cricketGameCanvas');
+          const w = canvas.clientWidth || 700, h = canvas.height;
+          const bat = [w * 0.72, h - 55];
+          cricketFx.label = '';
+          cricketFx.down = false;
+          cricketFlight([w * 0.22, h - 60], [w * 0.5, h - 80], bat, 450, () => {
+            if (ok) {
+              playSound('success');
+              cricketFx.label = item.runs === 6 ? 'SIX! 💥' : 'FOUR! 🔥';
+              award(pk, item.runs, x, y, true);
+              spawnVfxBurst(x, y, 32, `🏏 +${item.runs}`);
+              cricketFlight(bat, [w * 0.4, 5], [w * 0.05, h - 90], 900, () => setTimeout(endBall, 600));
+            } else {
+              cricketFx.down = true;
+              cricketFx.label = 'OUT! 🎯';
+              miss(pk, btn);
+              drawCricketStadium();
+              setTimeout(endBall, 900);
+            }
+          });
         });
         gridEl.appendChild(btn);
       });
@@ -2613,6 +3030,10 @@
           if (target === 'multiplayer') {
             setTimeout(() => { drawRaceCanvas(); drawCricketStadium(0); }, 60);
           }
+          document.getElementById('heroSection').classList.toggle('hidden', target === 'multiplayer');
+          currentTab = target;
+          document.getElementById('btnNextStep').textContent = NEXT_STEP[target].label;
+          FX.viewIn(views[target]);
           playSound('pop');
         });
       });
@@ -2678,6 +3099,14 @@
           playSound('pop');
         });
       }
+
+      document.getElementById('btnNextStep').addEventListener('click', () => {
+        document.querySelector(`[data-main-tab="${NEXT_STEP[currentTab].to}"]`).click();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+      buildFestivalScene();
+      FX.load();
+      playFestivalScene();
 
       document.getElementById('btnOpenFullFiveWays').addEventListener('click', () => {
         document.getElementById('navTabFiveWays').click();
@@ -2807,6 +3236,7 @@
         [2, 4, 6, 8, 10].forEach((tileNum, idx) => {
           setTimeout(() => {
             colouredAnuTiles.add(tileNum);
+            anuPop = tileNum;
             playSound('jump');
             renderAnuRectangles();
             updateAnuTrackStatus();
@@ -2867,9 +3297,10 @@
           Object.keys(mpPanels).forEach(k => {
             if (mpPanels[k]) mpPanels[k].classList.toggle('hidden', k !== gKey);
           });
-          if (gKey === 'balloon') startBalloonGame();
+          clearTimeout(balloonTimeout);
+          if (gKey === 'balloon') newBalloonMatch();
           if (gKey === 'race') drawRaceCanvas();
-          if (gKey === 'cricket') drawCricketStadium(0);
+          if (gKey === 'cricket') drawCricketStadium();
           playSound('pop');
         });
       });
@@ -2883,35 +3314,13 @@
       });
 
       document.getElementById('btnResetRaceGame').addEventListener('click', resetRaceGame);
-      document.getElementById('btnStartBalloonGame').addEventListener('click', startBalloonGame);
+      document.getElementById('btnStartBalloonGame').addEventListener('click', newBalloonMatch);
       document.getElementById('btnResetGridGame').addEventListener('click', initGridConquest);
       document.getElementById('btnResetCricketGame').addEventListener('click', initCricketGame);
 
       const bCanvas = document.getElementById('balloonGameCanvas');
       if (bCanvas) {
-        bCanvas.addEventListener('pointerdown', (e) => {
-          const rect = bCanvas.getBoundingClientRect();
-          const scaleX = bCanvas.width / Math.max(1, rect.width);
-          const scaleY = bCanvas.height / Math.max(1, rect.height);
-          const cx = (e.clientX - rect.left) * scaleX;
-          const cy = (e.clientY - rect.top) * scaleY;
-          for (const b of balloonsList) {
-            if (!b.popped && Math.hypot(cx - b.x, cy - b.y) < 44) {
-              b.popped = true;
-              if (b.val === balloonTarget.ans) {
-                playSound('success');
-                if (balloonTarget.turn === 'p1') mpScores.p1 += 20;
-                else mpScores.p2 += 20;
-                updateMpScoreboard();
-                spawnVfxBurst(e.clientX, e.clientY, 35, `🎈 POP! ${b.label} = ${b.val}`);
-                setTimeout(startBalloonGame, 500);
-              } else {
-                playSound('wrong');
-              }
-              break;
-            }
-          }
-        });
+        bCanvas.addEventListener('pointerdown', balloonPointer);
       }
 
       ['studioRows', 'studioCols'].forEach(id => {
